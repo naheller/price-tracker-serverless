@@ -7,7 +7,7 @@ const {
 const express = require("express");
 const serverless = require("serverless-http");
 
-const { getProductDetailsFromUrl } = require("./scraper");
+const { getProductDetails } = require("./scraper");
 const { amazonAsinRegex } = require("./utils");
 
 const app = express();
@@ -58,30 +58,26 @@ app.post("/products", async function (req, res) {
     res.status(400).json({ error: "URL does not contain an ASIN" });
   }
 
-  let productDetails = {};
-
-  try {
-    productDetails = getProductDetailsFromUrl();
-  } catch (error) {
-    res.status(500).json({ error: "Unable to get product details from URL" });
-  }
-
+  const productDetails = await getProductDetails(url);
   const { productId, title, price } = productDetails;
 
   const params = {
     TableName: PRODUCTS_TABLE,
     Item: {
-      productId: productId,
-      title: title,
-      price: price,
+      productId,
+      title,
+      price,
     },
   };
 
   try {
     await dynamoDbClient.send(new PutCommand(params));
-    res.json({ productId, title, price });
+    res.json(productDetails);
   } catch (error) {
-    res.status(500).json({ error: "Could not create product", details: error });
+    res.status(500).json({
+      error: "Could not create product",
+      productDetails: productDetails,
+    });
   }
 });
 

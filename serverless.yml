@@ -3,6 +3,9 @@ frameworkVersion: "3"
 
 custom:
   tableNameProducts: "products-${sls:stage}"
+  dynamodb:
+    stages:
+      - ${sls:stage}
 
 provider:
   name: aws
@@ -42,3 +45,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.tableNameProducts}
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
