@@ -2,7 +2,7 @@ const { getProductDetails } = require("./scraper");
 
 const test = async () => {
   const url =
-    "https://www.amazon.com/Midnight-Peking-Murder-Englishwoman-Haunted-ebook/dp/B0072NWJRK/ref=tmm_kin_swatch_0?_encoding=UTF8&qid=&sr=";
+    "https://www.amazon.com/gp/product/B0BTTVZGSQ?notRedirectToSDP=1&ref_=dbs_mng_calw_1&storeType=ebooks";
   const productDetails = await getProductDetails(url);
   console.log(productDetails);
 };
