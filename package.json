@@ -11,6 +11,7 @@
   "devDependencies": {
     "dynamodb-localhost": "https://github.com/99x/dynamodb-localhost#db30898f8c40932c7177be7b2f1a81360d12876d",
     "serverless-dynamodb-local": "^0.2.40",
+    "serverless-ignore": "^0.2.1",
     "serverless-offline": "^12.0.4"
   },
   "overrides": {

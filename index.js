@@ -3,6 +3,7 @@ const {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  ScanCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const express = require("express");
 const serverless = require("serverless-http");
@@ -18,6 +19,24 @@ const client = new DynamoDBClient();
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
 app.use(express.json());
+
+app.get("/products", async function (req, res) {
+  const params = {
+    TableName: PRODUCTS_TABLE,
+  };
+
+  try {
+    const { Items } = await dynamoDbClient.send(new ScanCommand(params));
+    if (Items) {
+      res.json({ products: Items });
+    } else {
+      res.status(404).json({ error: "Could not find any products" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Could fetch products" });
+  }
+});
 
 app.get("/products/:productId", async function (req, res) {
   const params = {
@@ -39,7 +58,7 @@ app.get("/products/:productId", async function (req, res) {
     }
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Could not retreive product" });
+    res.status(500).json({ error: "Could not fetch product" });
   }
 });
 
