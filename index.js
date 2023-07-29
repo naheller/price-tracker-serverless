@@ -2,7 +2,7 @@ const express = require("express");
 const serverless = require("serverless-http");
 
 const { getAllProducts, getProductById, addProduct } = require("./db");
-const { getProductDetails } = require("./scraper");
+const { getProductDetailsCamel } = require("./scraper");
 const { amazonAsinRegex } = require("./utils");
 
 const app = express();
@@ -19,7 +19,7 @@ app.get("/products", async function (req, res) {
     }
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Could fetch products" });
+    res.status(500).json({ error: "Could not fetch products", details: error });
   }
 });
 
@@ -36,7 +36,7 @@ app.get("/products/:productId", async function (req, res) {
         .json({ error: 'Could not find product with provided "productId"' });
     }
   } catch (error) {
-    res.status(500).json({ error: "Could not fetch product" });
+    res.status(500).json({ error: "Could not fetch product", details: error });
   }
 });
 
@@ -55,7 +55,13 @@ app.post("/products", async function (req, res) {
     res.status(400).json({ error: "URL does not contain an ASIN" });
   }
 
-  const productDetails = await getProductDetails(url);
+  const productDetails = {};
+
+  try {
+    productDetails = await getProductDetailsCamel(url);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
 
   try {
     await addProduct(productDetails);

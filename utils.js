@@ -6,8 +6,12 @@ const getAsinFromAmazonUrl = (amazonUrl = "") => {
 
 const getAmazonUrlFromAsin = (asin) => `https://www.amazon.com/dp/${asin}`;
 
+const getCamelUrlFromAsin = (asin) =>
+  `https://camelcamelcamel.com/product/${asin}`;
+
 module.exports = {
   amazonAsinRegex,
   getAsinFromAmazonUrl,
   getAmazonUrlFromAsin,
+  getCamelUrlFromAsin,
 };

@@ -1,8 +1,12 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { getAsinFromAmazonUrl, getAmazonUrlFromAsin } = require("./utils");
+const {
+  getAsinFromAmazonUrl,
+  getAmazonUrlFromAsin,
+  getCamelUrlFromAsin,
+} = require("./utils");
 
-const getProductDetails = async (url) => {
+const getProductDetailsAmazon = async (url) => {
   const asin = getAsinFromAmazonUrl(url);
   const cleanUrl = getAmazonUrlFromAsin(asin);
 
@@ -36,4 +40,48 @@ const getProductDetails = async (url) => {
   return productDetails;
 };
 
-module.exports = { getProductDetails };
+const getProductDetailsCamel = async (url) => {
+  const asin = getAsinFromAmazonUrl(url);
+  const cleanUrl = getCamelUrlFromAsin(asin);
+
+  let productDetails = {};
+
+  const headers = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+  };
+
+  const config = {
+    responseType: "text",
+    headers,
+  };
+
+  await axios.get(cleanUrl, { config }).then(({ data }) => {
+    const $ = cheerio.load(data);
+
+    const productTitle = $("meta[property='og:title']").attr("content");
+    const kindlePriceString = $(
+      "#content span[class='stat green'] > span[class='green']"
+    )
+      .text()
+      .trim();
+
+    const kindlePriceDecimal = kindlePriceString?.startsWith("$")
+      ? parseFloat(kindlePriceString.replace("$", ""))
+      : -1;
+
+    productDetails = {
+      productId: asin,
+      title: productTitle,
+      price: kindlePriceDecimal,
+    };
+  });
+
+  if (productDetails.price === -1) {
+    throw Error("Unable to find product price");
+  }
+
+  return productDetails;
+};
+
+module.exports = { getProductDetailsAmazon, getProductDetailsCamel };
