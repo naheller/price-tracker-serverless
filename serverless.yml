@@ -44,6 +44,10 @@ functions:
     handler: index.handler
     events:
       - httpApi: "*"
+  priceCheck:
+    handler: priceChecker.checkPricesAndAlert
+    events:
+      - schedule: rate(24 hours)
 
 resources:
   Resources:
@@ -62,3 +66,4 @@ resources:
 plugins:
   - serverless-dynamodb
   - serverless-offline
+  - serverless-ignore
