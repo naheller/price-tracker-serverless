@@ -1,14 +1,27 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
   DynamoDBDocumentClient,
+  ScanCommand,
   GetCommand,
   PutCommand,
-  ScanCommand,
+  UpdateCommand,
+  DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE;
+const isOffline = process.env.IS_OFFLINE === "true";
 
-const client = new DynamoDBClient();
+const client = isOffline
+  ? new DynamoDBClient({
+      region: "localhost",
+      endpoint: "http://0.0.0.0:8000",
+      credentials: {
+        accessKeyId: "MockAccessKeyId",
+        secretAccessKey: "MockSecretAccessKey",
+      },
+    })
+  : new DynamoDBClient();
+
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
 const getAllProducts = async () => {
@@ -33,19 +46,72 @@ const getProductById = async (id) => {
 };
 
 const addProduct = async (productDetails) => {
-  const { productId, title, price } = productDetails;
+  const { productId, title, price, imageUrl } = productDetails;
 
   const params = {
     TableName: PRODUCTS_TABLE,
     Item: {
       productId,
       title,
-      price,
+      imageUrl,
+      priceMax: price,
+      priceCurrent: price,
+      createdAt: new Date().toISOString(),
+      updatedAt: "",
     },
     ConditionExpression: "attribute_not_exists(productId)",
   };
 
-  return await dynamoDbClient.send(new PutCommand(params));
+  try {
+    return await dynamoDbClient.send(new PutCommand(params));
+  } catch (error) {
+    throw error;
+  }
 };
 
-module.exports = { getAllProducts, getProductById, addProduct };
+const updateProduct = async (productDetails) => {
+  const { productId, price } = productDetails;
+
+  const params = {
+    TableName: PRODUCTS_TABLE,
+    Key: {
+      productId,
+    },
+    UpdateExpression:
+      "set priceCurrent = :priceCurrent, updatedAt = :updatedAt",
+    ExpressionAttributeValues: {
+      ":priceCurrent": price,
+      ":updatedAt": new Date().toISOString(),
+    },
+    ConditionExpression: "attribute_exists(productId)",
+  };
+
+  try {
+    return await dynamoDbClient.send(new UpdateCommand(params));
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteProductById = async (productId) => {
+  const params = {
+    TableName: PRODUCTS_TABLE,
+    Key: {
+      productId,
+    },
+  };
+
+  try {
+    return await dynamoDbClient.send(new DeleteCommand(params));
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = {
+  getAllProducts,
+  getProductById,
+  addProduct,
+  updateProduct,
+  deleteProductById,
+};

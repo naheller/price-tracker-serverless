@@ -1,11 +1,24 @@
+org: naheller
+app: price-tracker
 service: price-tracker
 frameworkVersion: "3"
 
 custom:
-  tableNameProducts: "products-${sls:stage}"
-  dynamodb:
+  tableNameProducts: "products"
+  # dynamodb:
+  # stages:
+  #   - dev
+  # start:
+  #   port: 8000
+  #   migrate: true
+  serverless-dynamodb:
     stages:
-      - ${sls:stage}
+      - dev
+    start:
+      port: 8000
+      migrate: true
+      # docker: false
+      # noStart: true
 
 provider:
   name: aws
@@ -47,5 +60,5 @@ resources:
         TableName: ${self:custom.tableNameProducts}
 
 plugins:
+  - serverless-dynamodb
   - serverless-offline
-  - serverless-dynamodb-local

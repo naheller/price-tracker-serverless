@@ -1,7 +1,13 @@
 const express = require("express");
 const serverless = require("serverless-http");
 
-const { getAllProducts, getProductById, addProduct } = require("./db");
+const {
+  getAllProducts,
+  getProductById,
+  addProduct,
+  updateProduct,
+  deleteProductById,
+} = require("./db");
 const { getProductDetailsCamel } = require("./scraper");
 const { amazonAsinRegex } = require("./utils");
 
@@ -13,12 +19,11 @@ app.get("/products", async function (req, res) {
   try {
     const { Items } = await getAllProducts();
     if (Items) {
-      res.json({ products: Items });
+      res.status(200).json({ products: Items });
     } else {
       res.status(404).json({ error: "Could not find any products" });
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Could not fetch products", details: error });
   }
 });
@@ -28,15 +33,34 @@ app.get("/products/:productId", async function (req, res) {
     const { Item } = await getProductById(req.params.productId);
 
     if (Item) {
-      const { productId, title, price } = Item;
-      res.json({ productId, title, price });
+      const {
+        productId,
+        title,
+        imageUrl,
+        priceMax,
+        priceCurrent,
+        createdAt,
+        updatedAt,
+      } = Item;
+      res.status(200).json({
+        productId,
+        title,
+        imageUrl,
+        priceMax,
+        priceCurrent,
+        createdAt,
+        updatedAt,
+      });
     } else {
       res
         .status(404)
-        .json({ error: 'Could not find product with provided "productId"' });
+        .json({ error: "Could not find product with provided product id" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Could not fetch product", details: error });
+    res.status(500).json({
+      error: "Could not fetch product",
+      details: error?.message || error,
+    });
   }
 });
 
@@ -55,21 +79,79 @@ app.post("/products", async function (req, res) {
     res.status(400).json({ error: "URL does not contain an ASIN" });
   }
 
-  const productDetails = {};
+  let productDetails = {};
 
   try {
     productDetails = await getProductDetailsCamel(url);
   } catch (error) {
-    res.status(500).json({ error });
+    res.status(500).json({
+      error: "Could not retrieve product details",
+      errorDetails: error?.message || error,
+      productDetails,
+    });
+    return;
   }
 
   try {
-    await addProduct(productDetails);
-    res.json(productDetails);
+    const response = await addProduct(productDetails);
+    res.status(201).json(response);
   } catch (error) {
     res.status(500).json({
       error: "Could not create product",
-      productDetails: productDetails,
+      errorDetais: error?.message || error,
+      productDetails,
+    });
+  }
+});
+
+app.put("/products", async function (req, res) {
+  const { url } = req.body;
+
+  if (url === "") {
+    res.status(400).json({ error: "URL must not be empty" });
+  }
+
+  if (typeof url !== "string") {
+    res.status(400).json({ error: "URL must be a string" });
+  }
+
+  if (!amazonAsinRegex.test(url)) {
+    res.status(400).json({ error: "URL does not contain an ASIN" });
+  }
+
+  let productDetails = {};
+
+  try {
+    productDetails = await getProductDetailsCamel(url);
+  } catch (error) {
+    res.status(500).json({
+      error: "Could not retrieve product details",
+      errorDetails: error?.message || error,
+      productDetails,
+    });
+    return;
+  }
+
+  try {
+    const response = await updateProduct(productDetails);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({
+      error: "Could not update product",
+      errorDetais: error?.message || error,
+      productDetails,
+    });
+  }
+});
+
+app.delete("/products/:productId", async function (req, res) {
+  try {
+    const response = await deleteProductById(req.params.productId);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({
+      error: "Could not delete product",
+      details: error?.message || error,
     });
   }
 });

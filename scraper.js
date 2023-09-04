@@ -13,8 +13,12 @@ const getProductDetailsAmazon = async (url) => {
   let productDetails = {};
 
   const headers = {
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
   };
 
   const config = {
@@ -41,14 +45,24 @@ const getProductDetailsAmazon = async (url) => {
 };
 
 const getProductDetailsCamel = async (url) => {
-  const asin = getAsinFromAmazonUrl(url);
-  const cleanUrl = getCamelUrlFromAsin(asin);
+  let asin, cleanUrl;
+
+  try {
+    asin = getAsinFromAmazonUrl(url);
+    cleanUrl = getCamelUrlFromAsin(asin);
+  } catch (error) {
+    throw Error("Unable to build Camel URL");
+  }
 
   let productDetails = {};
 
   const headers = {
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
   };
 
   const config = {
@@ -56,26 +70,32 @@ const getProductDetailsCamel = async (url) => {
     headers,
   };
 
-  await axios.get(cleanUrl, { config }).then(({ data }) => {
-    const $ = cheerio.load(data);
+  try {
+    await axios.get(cleanUrl, { config }).then(({ data }) => {
+      const $ = cheerio.load(data);
 
-    const productTitle = $("meta[property='og:title']").attr("content");
-    const kindlePriceString = $(
-      "#content span[class='stat green'] > span[class='green']"
-    )
-      .text()
-      .trim();
+      const productTitle = $("meta[property='og:title']").attr("content");
+      const productImgUrl = $("#pimg").attr("src") || "";
+      const priceString = $(
+        "#content span[class='stat green'] > span[class='green']"
+      )
+        .text()
+        .trim();
 
-    const kindlePriceDecimal = kindlePriceString?.startsWith("$")
-      ? parseFloat(kindlePriceString.replace("$", ""))
-      : -1;
+      const kindlePriceDecimal = priceString?.startsWith("$")
+        ? parseFloat(priceString.replace("$", ""))
+        : -1;
 
-    productDetails = {
-      productId: asin,
-      title: productTitle,
-      price: kindlePriceDecimal,
-    };
-  });
+      productDetails = {
+        productId: asin,
+        title: productTitle,
+        price: kindlePriceDecimal,
+        imageUrl: productImgUrl,
+      };
+    });
+  } catch (error) {
+    throw error;
+  }
 
   if (productDetails.price === -1) {
     throw Error("Unable to find product price");
