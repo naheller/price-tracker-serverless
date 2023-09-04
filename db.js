@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
   DynamoDBDocumentClient,
@@ -8,16 +9,24 @@ const {
   DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
-const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE;
-const isOffline = process.env.IS_OFFLINE === "true";
+const {
+  PRODUCTS_TABLE,
+  IS_OFFLINE,
+  LOCAL_DB_REGION,
+  LOCAL_DB_ENDPOINT,
+  LOCAL_DB_ACCESS_KEY_ID,
+  LOCAL_DB_SECRET_ACCESS_KEY,
+} = process.env;
+
+const isOffline = IS_OFFLINE === "true";
 
 const client = isOffline
   ? new DynamoDBClient({
-      region: "localhost",
-      endpoint: "http://0.0.0.0:8000",
+      region: LOCAL_DB_REGION,
+      endpoint: LOCAL_DB_ENDPOINT,
       credentials: {
-        accessKeyId: "MockAccessKeyId",
-        secretAccessKey: "MockSecretAccessKey",
+        accessKeyId: LOCAL_DB_ACCESS_KEY_ID,
+        secretAccessKey: LOCAL_DB_SECRET_ACCESS_KEY,
       },
     })
   : new DynamoDBClient();
