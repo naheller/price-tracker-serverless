@@ -2,23 +2,16 @@ org: naheller
 app: price-tracker
 service: price-tracker
 frameworkVersion: "3"
+useDotenv: true
 
 custom:
-  tableNameProducts: "products"
-  # dynamodb:
-  # stages:
-  #   - dev
-  # start:
-  #   port: 8000
-  #   migrate: true
+  tableNameProducts: "PriceTrackerProducts"
   serverless-dynamodb:
     stages:
       - dev
     start:
       port: 8000
       migrate: true
-      # docker: false
-      # noStart: true
 
 provider:
   name: aws
@@ -46,8 +39,9 @@ functions:
       - httpApi: "*"
   priceCheck:
     handler: priceChecker.checkPricesAndAlert
+    timeout: 120
     events:
-      - schedule: rate(24 hours)
+      - schedule: cron(0 */12 * * ? *)
 
 resources:
   Resources:

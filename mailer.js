@@ -24,10 +24,12 @@ const sendAlert = async (products) => {
   const mailBodyHtml = `
     <p>Price alert!</p>
     <ul>
-      ${products.map(
-        (product) =>
-          `<li>$${product.price} - <a href="${product.url}">${product.title}</a></li>`
-      )}
+      ${products
+        .map(
+          (product) =>
+            `<li><b style="color:red">$${product.newPrice}</b> <s>$${product.oldPrice}</s> - <a href="${product.url}">${product.title}</a></li>`
+        )
+        .join("")}
     </ul>
   `;
 

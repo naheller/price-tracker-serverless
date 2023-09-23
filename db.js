@@ -19,18 +19,18 @@ const {
 } = process.env;
 
 const isOffline = IS_OFFLINE === "true";
-
-const client = isOffline
-  ? new DynamoDBClient({
+const dynamoClientArgs = isOffline
+  ? {
       region: LOCAL_DB_REGION,
       endpoint: LOCAL_DB_ENDPOINT,
       credentials: {
         accessKeyId: LOCAL_DB_ACCESS_KEY_ID,
         secretAccessKey: LOCAL_DB_SECRET_ACCESS_KEY,
       },
-    })
-  : new DynamoDBClient();
+    }
+  : {};
 
+const client = new DynamoDBClient(dynamoClientArgs);
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
 const getAllProducts = async () => {

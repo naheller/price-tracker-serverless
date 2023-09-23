@@ -3,6 +3,8 @@ const { getAmazonUrlFromAsin } = require("./utils");
 const { getProductDetailsCamel } = require("./scraper");
 const { getAllProducts, updateProduct } = require("./db");
 
+const timer = (ms) => new Promise((res) => setTimeout(res, ms));
+
 const checkPricesAndAlert = async () => {
   let products = [];
   let alertedProducts = [];
@@ -20,21 +22,28 @@ const checkPricesAndAlert = async () => {
     const cleanUrl = getAmazonUrlFromAsin(existingProduct.productId);
     const newProductDetails = await getProductDetailsCamel(cleanUrl);
 
-    if (newProductDetails?.price < existingProduct.priceMax) {
+    const newPrice = newProductDetails?.price;
+    const oldPrice = existingProduct?.priceCurrent;
+    const maxPrice = existingProduct?.priceMax;
+
+    if (newPrice < maxPrice && newPrice < oldPrice) {
       alertedProducts.push({
         title: existingProduct.title,
         url: cleanUrl,
-        price: newProductDetails.price,
+        newPrice,
+        oldPrice,
       });
     }
 
-    if (newProductDetails?.price !== existingProduct.priceCurrent) {
+    if (newPrice !== oldPrice) {
       try {
         await updateProduct(newProductDetails);
       } catch (error) {
         throw error;
       }
     }
+
+    await timer(500);
   }
 
   if (alertedProducts.length) {
