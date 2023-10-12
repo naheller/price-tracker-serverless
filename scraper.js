@@ -70,17 +70,34 @@ const getProductDetailsCamel = async (url) => {
     headers,
   };
 
+  let axiosData = {};
+
   try {
     await axios.get(cleanUrl, { config }).then(({ data }) => {
+      axiosData = data;
       const $ = cheerio.load(data);
 
       const productTitle = $("meta[property='og:title']").attr("content");
       const productImgUrl = $("#pimg").attr("src") || "";
-      const priceString = $(
-        "#content span[class='stat green'] > span[class='green']"
-      )
+
+      const priceStringAmazon = $("#eq_pw .pwheader.amazon .price")
         .text()
         .trim();
+      const priceStringNew = $("#eq_pw .pwheader.new .price").text().trim();
+
+      const NOT_IN_STOCK = "Not in Stock";
+      let priceString = NOT_IN_STOCK;
+
+      if (priceStringAmazon !== NOT_IN_STOCK) {
+        priceString = priceStringAmazon;
+      } else if (priceStringNew !== NOT_IN_STOCK) {
+        priceString = priceStringNew;
+      } else {
+        const error = new Error("Product is not in stock");
+        error.productId = productId;
+        error.product = productTitle;
+        throw error;
+      }
 
       const kindlePriceDecimal = priceString?.startsWith("$")
         ? parseFloat(priceString.replace("$", ""))
@@ -98,10 +115,15 @@ const getProductDetailsCamel = async (url) => {
   }
 
   if (productDetails.price === -1) {
-    throw Error("Unable to find product price");
+    const error = new Error("Unable to find product price");
+    error.productDetails = productDetails;
+    error.axiosData = axiosData;
+    throw error;
   }
-
   return productDetails;
 };
 
-module.exports = { getProductDetailsAmazon, getProductDetailsCamel };
+module.exports = {
+  getProductDetailsAmazon,
+  getProductDetailsCamel,
+};

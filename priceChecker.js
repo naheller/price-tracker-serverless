@@ -15,12 +15,20 @@ const checkPricesAndAlert = async () => {
       products = Items;
     }
   } catch (error) {
-    throw error;
+    console.log(error);
+    return;
   }
 
   for (const existingProduct of products) {
     const cleanUrl = getAmazonUrlFromAsin(existingProduct.productId);
-    const newProductDetails = await getProductDetailsCamel(cleanUrl);
+    let newProductDetails = {};
+
+    try {
+      newProductDetails = await getProductDetailsCamel(cleanUrl);
+    } catch (error) {
+      console.log(error);
+      break;
+    }
 
     const newPrice = newProductDetails?.price;
     const oldPrice = existingProduct?.priceCurrent;
@@ -39,15 +47,20 @@ const checkPricesAndAlert = async () => {
       try {
         await updateProduct(newProductDetails);
       } catch (error) {
-        throw error;
+        console.log(error);
+        break;
       }
     }
 
-    await timer(500);
+    await timer(100);
   }
 
   if (alertedProducts.length) {
-    sendAlert(alertedProducts);
+    try {
+      await sendAlert(alertedProducts);
+    } catch (error) {
+      console.log(error);
+    }
   }
 };
 

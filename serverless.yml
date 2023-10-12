@@ -39,9 +39,9 @@ functions:
       - httpApi: "*"
   priceCheck:
     handler: priceChecker.checkPricesAndAlert
-    timeout: 120
+    timeout: 60
     events:
-      - schedule: cron(0 */12 * * ? *)
+      - schedule: cron(0 12 * * ? *)
 
 resources:
   Resources:
@@ -61,3 +61,4 @@ plugins:
   - serverless-dynamodb
   - serverless-offline
   - serverless-ignore
+  - serverless-dotenv-plugin

@@ -19,7 +19,12 @@ const sendAlert = async (products) => {
       user: MAILER_USER,
       pass: MAILER_PASS,
     },
+    logger: true,
+    debug: true,
   });
+
+  const newPrice = parseFloat(product.newPrice).toFixed(2);
+  const oldPrice = parseFloat(product.oldPrice).toFixed(2);
 
   const mailBodyHtml = `
     <p>Price alert!</p>
@@ -27,7 +32,7 @@ const sendAlert = async (products) => {
       ${products
         .map(
           (product) =>
-            `<li><b style="color:red">$${product.newPrice}</b> <s>$${product.oldPrice}</s> - <a href="${product.url}">${product.title}</a></li>`
+            `<li><b style="color:red">$${newPrice}</b> <s>$${oldPrice}</s> - <a href="${product.url}">${product.title}</a></li>`
         )
         .join("")}
     </ul>
@@ -42,6 +47,7 @@ const sendAlert = async (products) => {
   });
 
   console.log("Message sent: %s", info.messageId);
+  return true;
 };
 
 module.exports = { sendAlert };
