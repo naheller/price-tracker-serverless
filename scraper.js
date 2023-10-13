@@ -78,7 +78,7 @@ const getProductDetailsCamel = async (url) => {
       const $ = cheerio.load(data);
 
       const productTitle = $("meta[property='og:title']").attr("content");
-      const productImgUrl = $("#pimg").attr("src") || "";
+      const productImgUrl = $(".pimg").attr("src") || "";
 
       const priceStringAmazon = $("#eq_pw .pwheader.amazon .price")
         .text()

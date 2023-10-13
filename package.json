@@ -1,7 +1,8 @@
 {
   "name": "price-tracker",
   "version": "1.0.0",
-  "description": "",
+  "author": "Nathan Heller",
+  "description": "Price Tracker Service",
   "scripts": {
     "offline": "serverless offline start --reloadHandler"
   },

@@ -10,38 +10,31 @@ const {
   MAILER_TO,
 } = process.env;
 
-const sendAlert = async (products) => {
-  const transporter = nodemailer.createTransport({
-    host: MAILER_HOST,
-    port: parseInt(MAILER_PORT),
-    secure: true,
-    auth: {
-      user: MAILER_USER,
-      pass: MAILER_PASS,
-    },
-    logger: true,
-    debug: true,
-  });
+const transporter = nodemailer.createTransport({
+  host: MAILER_HOST,
+  port: parseInt(MAILER_PORT),
+  secure: true,
+  auth: {
+    user: MAILER_USER,
+    pass: MAILER_PASS,
+  },
+  logger: true,
+  debug: true,
+});
 
+const sendAlert = async (products) => {
   const newPrice = parseFloat(product.newPrice).toFixed(2);
   const oldPrice = parseFloat(product.oldPrice).toFixed(2);
 
-  const mailBodyHtml = `
-    <p>Price alert!</p>
-    <ul>
-      ${products
-        .map(
-          (product) =>
-            `<li><b style="color:red">$${newPrice}</b> <s>$${oldPrice}</s> - <a href="${product.url}">${product.title}</a></li>`
-        )
-        .join("")}
-    </ul>
-  `;
+  const mailBodyHtml = products.map(
+    (product) =>
+      `<p><b style="color:red">$${newPrice}</b> <s>$${oldPrice}</s> - <a href="${product.url}">${product.title}</a></p>`
+  );
 
   const info = await transporter.sendMail({
     from: `"Price Tracker" <${MAILER_FROM}>`,
     to: MAILER_TO,
-    subject: "Price Tracker Alert",
+    subject: "Price Alert",
     text: mailBodyHtml,
     html: mailBodyHtml,
   });
@@ -50,4 +43,27 @@ const sendAlert = async (products) => {
   return true;
 };
 
-module.exports = { sendAlert };
+const sendErrorAlert = async () => {
+  let dateNow = new Date();
+
+  const mailBodyHtml = `
+    <h1>Error alert!</h1>
+    <p>All products errored during a cron that ran at approximately: ${dateNow.toLocaleString()}</p>
+    <a href="https://app.serverless.com/naheller/apps/price-tracker/price-tracker/dev/us-east-1/overview">
+      View serverless dashboard
+    </a>
+  `;
+
+  const info = await transporter.sendMail({
+    from: `"Price Tracker" <${MAILER_FROM}>`,
+    to: MAILER_TO,
+    subject: "Error Alert",
+    text: mailBodyHtml,
+    html: mailBodyHtml,
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  return true;
+};
+
+module.exports = { sendAlert, sendErrorAlert };

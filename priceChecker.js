@@ -1,4 +1,4 @@
-const { sendAlert } = require("./mailer");
+const { sendAlert, sendErrorAlert } = require("./mailer");
 const { getAmazonUrlFromAsin } = require("./utils");
 const { getProductDetailsCamel } = require("./scraper");
 const { getAllProducts, updateProduct } = require("./db");
@@ -8,6 +8,7 @@ const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 const checkPricesAndAlert = async () => {
   let products = [];
   let alertedProducts = [];
+  let erroredProducts = 0;
 
   try {
     const { Items } = await getAllProducts();
@@ -27,7 +28,8 @@ const checkPricesAndAlert = async () => {
       newProductDetails = await getProductDetailsCamel(cleanUrl);
     } catch (error) {
       console.log(error);
-      break;
+      erroredProducts += 1;
+      continue;
     }
 
     const newPrice = newProductDetails?.price;
@@ -58,6 +60,14 @@ const checkPricesAndAlert = async () => {
   if (alertedProducts.length) {
     try {
       await sendAlert(alertedProducts);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  if (erroredProducts === products.length) {
+    try {
+      await sendErrorAlert();
     } catch (error) {
       console.log(error);
     }
