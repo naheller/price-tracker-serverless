@@ -23,13 +23,18 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendAlert = async (products) => {
-  const newPrice = parseFloat(product.newPrice).toFixed(2);
-  const oldPrice = parseFloat(product.oldPrice).toFixed(2);
-
-  const mailBodyHtml = products.map(
-    (product) =>
-      `<p><b style="color:red">$${newPrice}</b> <s>$${oldPrice}</s> - <a href="${product.url}">${product.title}</a></p>`
-  );
+  const mailBodyHtml = `
+  ${products
+    .map((product) => {
+      const newPrice = parseFloat(product.newPrice).toFixed(2);
+      const oldPrice = parseFloat(product.oldPrice).toFixed(2);
+      return `<p><b style="color:red">$${newPrice}</b> <s>$${oldPrice}</s> - <a href="${product.url}">${product.title}</a></p>`;
+    })
+    .join("")}
+    <a href="https://app.serverless.com/naheller/apps/price-tracker/price-tracker/dev/us-east-1/overview">
+      View serverless dashboard
+    </a>
+  `;
 
   const info = await transporter.sendMail({
     from: `"Price Tracker" <${MAILER_FROM}>`,
@@ -44,11 +49,9 @@ const sendAlert = async (products) => {
 };
 
 const sendErrorAlert = async () => {
-  let dateNow = new Date();
-
   const mailBodyHtml = `
     <h1>Error alert!</h1>
-    <p>All products errored during a cron that ran at approximately: ${dateNow.toLocaleString()}</p>
+    <p>All products errored during a cron that ran at approximately: ${new Date().toLocaleString()}</p>
     <a href="https://app.serverless.com/naheller/apps/price-tracker/price-tracker/dev/us-east-1/overview">
       View serverless dashboard
     </a>

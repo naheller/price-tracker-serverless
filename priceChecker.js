@@ -54,7 +54,7 @@ const checkPricesAndAlert = async () => {
       }
     }
 
-    await timer(100);
+    await timer(500);
   }
 
   if (alertedProducts.length) {
