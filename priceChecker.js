@@ -8,7 +8,7 @@ const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 const checkPricesAndAlert = async () => {
   let products = [];
   let alertedProducts = [];
-  let erroredProducts = 0;
+  let numErroredProducts = 0;
 
   try {
     const { Items } = await getAllProducts();
@@ -28,7 +28,7 @@ const checkPricesAndAlert = async () => {
       newProductDetails = await getProductDetailsCamel(cleanUrl);
     } catch (error) {
       console.log(error);
-      erroredProducts += 1;
+      numErroredProducts += 1;
       continue;
     }
 
@@ -54,7 +54,7 @@ const checkPricesAndAlert = async () => {
       }
     }
 
-    await timer(500);
+    await timer(1000);
   }
 
   if (alertedProducts.length) {
@@ -65,7 +65,7 @@ const checkPricesAndAlert = async () => {
     }
   }
 
-  if (erroredProducts === products.length) {
+  if (numErroredProducts === products.length) {
     try {
       await sendErrorAlert();
     } catch (error) {
