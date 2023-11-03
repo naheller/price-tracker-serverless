@@ -32,7 +32,10 @@ const sendAlert = async (products) => {
     })
     .join("")}
     <a href="https://app.serverless.com/naheller/apps/price-tracker/price-tracker/dev/us-east-1/overview">
-      View serverless dashboard
+      Serverless dashboard
+    </a>
+    <a href="https://nxpt.netlify.app/">
+      Tracker website
     </a>
   `;
 

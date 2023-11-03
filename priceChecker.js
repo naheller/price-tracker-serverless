@@ -21,6 +21,7 @@ const checkPricesAndAlert = async () => {
   }
 
   for (const existingProduct of products) {
+    console.log("checking product", existingProduct.title);
     const cleanUrl = getAmazonUrlFromAsin(existingProduct.productId);
     let newProductDetails = {};
 
@@ -54,7 +55,7 @@ const checkPricesAndAlert = async () => {
       }
     }
 
-    await timer(1000);
+    await timer(2000);
   }
 
   if (alertedProducts.length) {
