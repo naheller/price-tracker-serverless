@@ -8,6 +8,7 @@ const {
   MAILER_PASS,
   MAILER_FROM,
   MAILER_TO,
+  TRACKER_SITE_URL,
 } = process.env;
 
 const transporter = nodemailer.createTransport({
@@ -34,7 +35,7 @@ const sendAlert = async (products) => {
     <a href="https://app.serverless.com/naheller/apps/price-tracker/price-tracker/dev/us-east-1/overview">
       Serverless dashboard
     </a>
-    <a href="https://nxpt.netlify.app/">
+    <a href="${TRACKER_SITE_URL}">
       Tracker website
     </a>
   `;
