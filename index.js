@@ -11,6 +11,8 @@ const {
 } = require("./db");
 const { getProductDetailsCamel } = require("./scraper");
 const { amazonAsinRegex } = require("./utils");
+const { addToQueue2 } = require("./queueActions");
+const { sendTestAlert } = require("./mailer");
 
 const app = express();
 
@@ -153,6 +155,30 @@ app.delete("/products/:productId", async function (req, res) {
   } catch (error) {
     res.status(500).json({
       error: "Could not delete product",
+      details: error?.message || error,
+    });
+  }
+});
+
+app.get("/queue/addAllProducts", async function (req, res) {
+  try {
+    const products = await addToQueue2();
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({
+      error: "Could not add all products to queue",
+      details: error?.message || error,
+    });
+  }
+});
+
+app.get("/mailer/test", async function (req, res) {
+  try {
+    sendTestAlert();
+    res.status(200);
+  } catch (error) {
+    res.status(500).json({
+      error: "Error sending test email",
       details: error?.message || error,
     });
   }

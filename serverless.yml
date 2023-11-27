@@ -40,8 +40,14 @@ functions:
   priceCheck:
     handler: priceChecker.checkPricesAndAlert
     timeout: 60
+    # events:
+    #   - schedule: cron(55 19 * * ? *)
+  addToQueue:
+    handler: queueActions.addToQueue2
+    # environment:
+    #   QUEUE_URL: ${construct:product-queue.queueUrl}
     events:
-      - schedule: cron(0 12 * * ? *)
+      - schedule: cron(35 16 * * ? *)
 
 resources:
   Resources:
@@ -57,8 +63,22 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.tableNameProducts}
 
+constructs:
+  product-queue:
+    type: queue
+    # fifo: true
+    # delay: 60
+    batchSize: 1
+    # maxBatchingWindow: 5
+    # maxConcurrency: 2
+    worker:
+      handler: queueActions.processQueueItem2
+      # timeout: 10
+      # reservedConcurrency: 1 # does this work?
+
 plugins:
   - serverless-dynamodb
   - serverless-offline
   - serverless-ignore
   - serverless-dotenv-plugin
+  - serverless-lift
