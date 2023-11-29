@@ -65,8 +65,9 @@ const addProduct = async (productDetails) => {
       imageUrl,
       priceMax: price,
       priceCurrent: price,
-      createdAt: new Date().toISOString(),
-      updatedAt: "",
+      dateCreated: new Date().toISOString(),
+      dateRead: new Date().toISOString(),
+      dateUpdated: "",
     },
     ConditionExpression: "attribute_not_exists(productId)",
   };
@@ -78,20 +79,37 @@ const addProduct = async (productDetails) => {
   }
 };
 
-const updateProduct = async (productDetails) => {
+const updateProduct = async (productDetails, shouldUpdatePrice = false) => {
   const { productId, price } = productDetails;
+  const nowString = new Date().toISOString();
+
+  const expAssignments = {
+    priceCurrent: "priceCurrent = :priceCurrent",
+    dateRead: "dateRead = :dateRead",
+    dateUpdated: "dateUpdated = :dateUpdated",
+  };
+
+  const updateExpString = shouldUpdatePrice
+    ? `set ${Object.values(expAssignments).join(", ")}`
+    : `set ${expAssignments.dateRead}`;
+
+  const expAttributeValues = shouldUpdatePrice
+    ? {
+        ":priceCurrent": price,
+        ":dateRead": nowString,
+        ":dateUpdated": nowString,
+      }
+    : {
+        ":dateRead": nowString,
+      };
 
   const params = {
     TableName: PRODUCTS_TABLE,
     Key: {
       productId,
     },
-    UpdateExpression:
-      "set priceCurrent = :priceCurrent, updatedAt = :updatedAt",
-    ExpressionAttributeValues: {
-      ":priceCurrent": price,
-      ":updatedAt": new Date().toISOString(),
-    },
+    UpdateExpression: updateExpString,
+    ExpressionAttributeValues: expAttributeValues,
     ConditionExpression: "attribute_exists(productId)",
   };
 

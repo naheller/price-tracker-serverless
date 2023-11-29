@@ -41,8 +41,9 @@ app.get("/products/:productId", async function (req, res) {
         imageUrl,
         priceMax,
         priceCurrent,
-        createdAt,
-        updatedAt,
+        dateCreated,
+        dateRead,
+        dateUpdated,
       } = Item;
       res.status(200).json({
         productId,
@@ -50,8 +51,9 @@ app.get("/products/:productId", async function (req, res) {
         imageUrl,
         priceMax,
         priceCurrent,
-        createdAt,
-        updatedAt,
+        dateCreated,
+        dateRead,
+        dateUpdated,
       });
     } else {
       res

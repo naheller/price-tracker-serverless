@@ -1,4 +1,4 @@
-const { sendAlert, sendErrorAlert } = require("./mailer");
+const { sendAlert, sendErrorAlertAll } = require("./mailer");
 const { getAmazonUrlFromAsin } = require("./utils");
 const { getProductDetailsCamel } = require("./scraper");
 const { getAllProducts, updateProduct } = require("./db");
@@ -68,7 +68,7 @@ const checkPricesAndAlert = async () => {
 
   if (numErroredProducts === products.length) {
     try {
-      await sendErrorAlert();
+      await sendErrorAlertAll();
     } catch (error) {
       console.log(error);
     }

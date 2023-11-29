@@ -37,11 +37,16 @@ functions:
     handler: index.handler
     events:
       - httpApi: "*"
-  priceCheck:
-    handler: priceChecker.checkPricesAndAlert
+  # priceCheck:
+  #   handler: priceChecker.checkPricesAndAlert
+  #   timeout: 60
+  #   events:
+  #     - schedule: cron(15 16 * * ? *)
+  priceCheckSingle:
+    handler: priceCheckerSingle.checkPriceAndAlert
     timeout: 60
-    events:
-      - schedule: cron(0 12 * * ? *)
+    # events:
+    #   - schedule: rate(5 minutes)
 
 resources:
   Resources:
