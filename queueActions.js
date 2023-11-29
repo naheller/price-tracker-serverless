@@ -4,12 +4,13 @@
 //     apiVersion: 'latest',
 //     region: process.env.AWS_REGION,
 // });
-const { 
+const {
   SQSClient,
   SendMessageCommand,
   ReceiveMessageCommand,
   DeleteMessageCommand,
-  DeleteMessageBatchCommand, } = require("@aws-sdk/client-sqs");
+  DeleteMessageBatchCommand,
+} = require("@aws-sdk/client-sqs");
 
 const { getAllProducts, updateProduct } = require("./db");
 const { getProductDetailsCamel } = require("./scraper");
@@ -20,11 +21,11 @@ const client = new SQSClient({});
 const { SQS_QUEUE_URL } = process.env;
 
 const sleep = (ms) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 const addToQueue = async () => {
-  console.log('---addToQueue---')
+  console.log("---addToQueue---");
   const command = new SendMessageCommand({
     QueueUrl: SQS_QUEUE_URL,
     MessageGroupId: "Product",
@@ -48,12 +49,12 @@ const addToQueue = async () => {
   });
 
   const response = await client.send(command);
-  console.log('response', response);
+  console.log("response", response);
   return response;
-}
+};
 
 const addToQueue2 = async () => {
-  console.log('---addToQueue2---')
+  console.log("---addToQueue2---");
   let products = [];
 
   try {
@@ -67,7 +68,7 @@ const addToQueue2 = async () => {
   }
 
   for (const product of products) {
-    console.log('sending message for', product.title)
+    console.log("sending message for", product.title);
     const messageBodyObj = {
       productId: product.productId,
       title: product.title,
@@ -102,16 +103,16 @@ const addToQueue2 = async () => {
 
     try {
       const response = await client.send(command);
-      console.log('response', response)
+      console.log("response", response);
     } catch (e) {
-      console.log('error', e)
+      console.log("error", e);
     }
   }
 
   return products;
-}
+};
 
-const receiveMessage = (queueUrl) => (
+const receiveMessage = (queueUrl) =>
   client.send(
     new ReceiveMessageCommand({
       AttributeNames: ["All"],
@@ -120,12 +121,11 @@ const receiveMessage = (queueUrl) => (
       QueueUrl: queueUrl,
       // WaitTimeSeconds: 20,
       // VisibilityTimeout: 20,
-    }),
-  )
-);
+    })
+  );
 
 const processQueueItem = async () => {
-  console.log('---processQueueItem---')
+  console.log("---processQueueItem---");
   // const { Messages } = await receiveMessage(SQS_QUEUE_URL);
   let response = {};
 
@@ -138,31 +138,31 @@ const processQueueItem = async () => {
         MaxNumberOfMessages: 1,
         // WaitTimeSeconds: 60,
         // VisibilityTimeout: 60,
-      }),
+      })
     );
-    console.log('response', response)
+    console.log("response", response);
   } catch (e) {
-    console.log('error', e)
+    console.log("error", e);
   }
 
   const { Messages } = response;
 
   if (!Messages) {
-    console.log('no messages property in response at all! returning')
+    console.log("no messages property in response at all! returning");
     return;
   }
 
   if (Messages.length === 1) {
-    console.log('Messages[0].Body', Messages[0].Body);
-    console.log('deleting 1 message')
+    console.log("Messages[0].Body", Messages[0].Body);
+    console.log("deleting 1 message");
     await client.send(
       new DeleteMessageCommand({
         QueueUrl: SQS_QUEUE_URL,
         ReceiptHandle: Messages[0].ReceiptHandle,
-      }),
+      })
     );
   } else if (Messages.length > 1) {
-    console.log('deleting multiple messages')
+    console.log("deleting multiple messages");
     await client.send(
       new DeleteMessageBatchCommand({
         QueueUrl: SQS_QUEUE_URL,
@@ -170,71 +170,76 @@ const processQueueItem = async () => {
           Id: message.MessageId,
           ReceiptHandle: message.ReceiptHandle,
         })),
-      }),
+      })
     );
   } else {
-    console.log('empty messages. returning.')
+    console.log("empty messages. returning.");
     return;
   }
 };
 
 const processQueueItem2 = async (event) => {
-  console.log('--processQueueItem2--')
+  console.log("--processQueueItem2--");
   // console.log('event', event)
   if (!event?.Records.length) {
     return;
   }
 
-  console.log('total records:', event.Records.length)
+  console.log("total records:", event.Records.length);
   const record = event.Records[0];
 
   // for (const record of event.Records) {
   // event.Records.forEach(async record => {
-    const { body } = record;
-    const oldProductDetails = JSON.parse(body);
-    const cleanUrl = getAmazonUrlFromAsin(oldProductDetails.productId);
-    console.log('body', body);
-    // console.log('parsedBody', parsedBody);
-    let newProductDetails = {};
-    
+  const { body } = record;
+  const oldProductDetails = JSON.parse(body);
+  const cleanUrl = getAmazonUrlFromAsin(oldProductDetails.productId);
+  console.log("body", body);
+  // console.log('parsedBody', parsedBody);
+  let newProductDetails = {};
+
+  try {
+    newProductDetails = await getProductDetailsCamel(cleanUrl);
+    console.log("newProductDetails", newProductDetails);
+  } catch (error) {
+    console.log("error getting newProductDetails", error);
+    sendErrorAlertSingle(oldProductDetails.title);
+  }
+
+  const newPrice = newProductDetails?.price;
+  const oldPrice = oldProductDetails?.priceCurrent;
+  const maxPrice = oldProductDetails?.priceMax;
+
+  console.log("newPrice", newPrice);
+  console.log("oldPrice", oldPrice);
+  console.log("maxPrice", maxPrice);
+
+  if (newPrice < maxPrice && newPrice < oldPrice) {
+    console.log("found lower price. alerting.");
+    await sendAlertSingle({
+      title: newProductDetails.title,
+      url: cleanUrl,
+      newPrice,
+      oldPrice,
+    });
+  }
+
+  if (newPrice !== oldPrice) {
+    console.log("updating product price");
     try {
-      newProductDetails = await getProductDetailsCamel(cleanUrl);
-      console.log('newProductDetails', newProductDetails)
+      await updateProduct(newProductDetails);
     } catch (error) {
-      console.log('error getting newProductDetails', error);
-      sendErrorAlertSingle(oldProductDetails.title);
+      console.log(error);
+      // break;
     }
-
-    const newPrice = newProductDetails?.price;
-    const oldPrice = oldProductDetails?.priceCurrent;
-    const maxPrice = oldProductDetails?.priceMax;
-
-    console.log('newPrice', newPrice)
-    console.log('oldPrice', oldPrice)
-    console.log('maxPrice', maxPrice)
-
-    if (newPrice < maxPrice && newPrice < oldPrice) {
-      console.log('found lower price. alerting.')
-      sendAlertSingle({
-        title: newProductDetails.title,
-        url: cleanUrl,
-        newPrice,
-        oldPrice,
-      });
-    }
-
-    if (newPrice !== oldPrice) {
-      console.log('updating product price')
-      try {
-        await updateProduct(newProductDetails);
-      } catch (error) {
-        console.log(error);
-        // break;
-      }
-    }
+  }
   // };
   // await sleep(2000);
   return {};
 };
 
-module.exports = { addToQueue, addToQueue2, processQueueItem, processQueueItem2 };
+module.exports = {
+  addToQueue,
+  addToQueue2,
+  processQueueItem,
+  processQueueItem2,
+};
