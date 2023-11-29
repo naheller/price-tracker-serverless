@@ -1,4 +1,4 @@
-const amazonAsinRegex = /(?:[/dp/]|$)([A-Z0-9]{10})/;
+const amazonAsinRegex = /(?:[/dp/]|$)([a-zA-Z0-9]{10})/;
 
 const getAsinFromAmazonUrl = (amazonUrl = "") => {
   return amazonUrl.match(amazonAsinRegex)[1] || "";

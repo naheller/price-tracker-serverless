@@ -65,8 +65,8 @@ const addProduct = async (productDetails) => {
       imageUrl,
       priceMax: price,
       priceCurrent: price,
-      createdAt: new Date().toISOString(),
-      updatedAt: "",
+      dateCreated: new Date().toISOString(),
+      dateUpdated: "",
     },
     ConditionExpression: "attribute_not_exists(productId)",
   };
@@ -87,10 +87,10 @@ const updateProduct = async (productDetails) => {
       productId,
     },
     UpdateExpression:
-      "set priceCurrent = :priceCurrent, updatedAt = :updatedAt",
+      "set priceCurrent = :priceCurrent, dateUpdated = :dateUpdated",
     ExpressionAttributeValues: {
       ":priceCurrent": price,
-      ":updatedAt": new Date().toISOString(),
+      ":dateUpdated": new Date().toISOString(),
     },
     ConditionExpression: "attribute_exists(productId)",
   };
