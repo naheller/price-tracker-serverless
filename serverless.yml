@@ -47,7 +47,7 @@ functions:
     # environment:
     #   QUEUE_URL: ${construct:product-queue.queueUrl}
     events:
-      - schedule: cron(0 11 * * ? *)
+      - schedule: cron(0 12 * * ? *)
 
 resources:
   Resources:
